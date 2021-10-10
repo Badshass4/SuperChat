@@ -1,8 +1,14 @@
 import React, {useState, useEffect} from 'react';
-import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
+import {StyleSheet, Text, View, TouchableOpacity, Alert} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useDispatch} from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 import {loginUser, logoutUser} from '../../state/actions/UserAction';
 import {useTypedSelector} from '../../state/reducers/RootReducer';
@@ -11,49 +17,100 @@ interface LoginScreenProps {
   useEffectHook: any;
   text: string;
   setText: Function;
-  googleIcon: any;
   dispatch: Function;
+  navigation: any;
   user: any;
+  loggedIn: any;
+  setloggedIn: Function;
 }
 
 const LoginScreen = () => {
-  const googleIcon = <Icon name="google" size={30} />;
-  const [text, setText] = useState('Login to use SuperChat');
+  // const googleIcon = <Icon name="google" size={30} />;
+  const [text, setText] = useState('Login to SuperChat');
+  const [loggedIn, setloggedIn] = useState(false);
   const dispatch = useDispatch();
+  const navigation = useNavigation();
   const user = useTypedSelector(state => state.UserReducer);
   return (
     <LoginScreenProps
       useEffectHook={useEffect}
       text={text}
       setText={setText}
-      googleIcon={googleIcon}
       dispatch={dispatch}
+      navigation={navigation}
       user={user}
+      loggedIn={loggedIn}
+      setloggedIn={setloggedIn}
     />
   );
 };
 
 export const LoginScreenProps = (props: LoginScreenProps) => {
-  const {useEffectHook, text, setText, googleIcon, dispatch, user} = props;
+  const {
+    useEffectHook,
+    text,
+    setText,
+    dispatch,
+    navigation,
+    user,
+    setloggedIn,
+  } = props;
 
-  const onGooglePress = () => {
-    dispatch(loginUser({userId: '1', userEmail: 'abc@gmail.com'}));
+  useEffectHook(() => {
+    if (user.userEmail) {
+      console.log('here');
+      // navigation.navigate('Home');
+    }
+  }, [user]);
+
+  useEffectHook(() => {
+    GoogleSignin.configure({
+      scopes: ['email'], // what API you want to access on behalf of the user, default is email and profile
+      webClientId:
+        '721062517045-85pjrc95p8k9ppc0hj2k3j493oqna6qj.apps.googleusercontent.com', // client ID of type WEB for your server (needed to verify user ID and offline access)
+      offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+    });
+  }, []);
+
+  const onGooglePress = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      console.log('<================== sign in complete ====================>');
+      const payload = {
+        userId: userInfo.user.id,
+        userEmail: userInfo.user.email,
+        userName: userInfo.user.name,
+      };
+      dispatch(loginUser(payload));
+      setloggedIn(true);
+      Alert.alert(payload.userName + ' has logged in !');
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // user cancelled the login flow
+        Alert.alert('Cancel');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        Alert.alert('Signin in progress');
+        // operation (f.e. sign in) is in progress already
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('PLAY_SERVICES_NOT_AVAILABLE');
+        // play services not available or outdated
+      } else {
+        // some other error happened
+        Alert.alert(error);
+      }
+    }
   };
-
-  // useEffectHook(() => {
-  //   if (user.userEmail) {
-  //     setText(user.userEmail);
-  //   }
-  // }, [user]);
 
   return (
     <View style={styles.mainContainer}>
       <Text style={styles.text}>{text}</Text>
       <TouchableOpacity onPress={onGooglePress}>
-        <View style={styles.iconView}>
-          {googleIcon}
-          <Text style={styles.googleText}>oogle</Text>
-        </View>
+        <GoogleSigninButton
+          style={styles.googleBtn}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Light}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -74,13 +131,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  googleText: {
-    fontSize: 28,
+  googleBtn: {
+    width: 192,
+    height: 48,
   },
   text: {
     fontFamily: 'nunito',
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 20,
     margin: 10,
   },
 });

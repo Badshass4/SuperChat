@@ -5,6 +5,7 @@ import User from '../../models/UserModel';
 const initialState: User = {
   userId: null,
   userEmail: null,
+  userName: null,
 };
 
 export default (state = initialState, action: UserActions) => {
@@ -14,6 +15,7 @@ export default (state = initialState, action: UserActions) => {
         ...state,
         userId: action.payload.userId,
         userEmail: action.payload.userEmail,
+        userName: action.payload.userName,
       };
     case USER_LOGOUT:
       return {
