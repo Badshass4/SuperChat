@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {StyleSheet, Text, View, TouchableOpacity, Alert} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Icon from 'react-native-vector-icons/FontAwesome';
+// import Icon from 'react-native-vector-icons/FontAwesome';
 import {useDispatch} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {
@@ -10,7 +10,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 
-import {loginUser, logoutUser} from '../../state/actions/UserAction';
+import {loginUser} from '../../state/actions/UserAction';
 import {useTypedSelector} from '../../state/reducers/RootReducer';
 
 interface LoginScreenProps {
@@ -56,12 +56,7 @@ export const LoginScreenProps = (props: LoginScreenProps) => {
     setloggedIn,
   } = props;
 
-  useEffectHook(() => {
-    if (user.userEmail) {
-      console.log('here');
-      // navigation.navigate('Home');
-    }
-  }, [user]);
+  const {userEmail} = user;
 
   useEffectHook(() => {
     GoogleSignin.configure({
@@ -72,29 +67,64 @@ export const LoginScreenProps = (props: LoginScreenProps) => {
     });
   }, []);
 
+  async function signIn() {
+    await GoogleSignin.hasPlayServices();
+    const userInfo = await GoogleSignin.signIn();
+    console.log(
+      '<================== LoginScreen ==> sign in complete ====================>',
+    );
+    const payload = {
+      userId: userInfo.user.id,
+      userEmail: userInfo.user.email,
+      userName: userInfo.user.name,
+    };
+    dispatch(loginUser(payload));
+    setloggedIn(true);
+  }
+  async function silentSignIn() {
+    const userInfo = await GoogleSignin.signInSilently();
+    console.log(
+      '<================== LoginScreen ==> silent Sign in complete ====================>',
+    );
+    const payload = {
+      userId: userInfo.user.id,
+      userEmail: userInfo.user.email,
+      userName: userInfo.user.name,
+    };
+    dispatch(loginUser(payload));
+  }
+
+  useEffectHook(() => {
+    async function isUserSignedIn() {
+      const isSignedIn = await GoogleSignin.isSignedIn();
+      if (isSignedIn) {
+        silentSignIn();
+      } else {
+        console.log('No user Logged In');
+      }
+    }
+    isUserSignedIn();
+    if (userEmail) {
+      navigation.navigate('Home');
+    }
+  }, [userEmail]);
+
   const onGooglePress = async () => {
     try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo = await GoogleSignin.signIn();
-      console.log('<================== sign in complete ====================>');
-      const payload = {
-        userId: userInfo.user.id,
-        userEmail: userInfo.user.email,
-        userName: userInfo.user.name,
-      };
-      dispatch(loginUser(payload));
-      setloggedIn(true);
-      Alert.alert(payload.userName + ' has logged in !');
+      signIn();
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         // user cancelled the login flow
         Alert.alert('Cancel');
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        Alert.alert('Signin in progress');
         // operation (f.e. sign in) is in progress already
+        Alert.alert('Signin in progress');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert('PLAY_SERVICES_NOT_AVAILABLE');
         // play services not available or outdated
+        Alert.alert('PLAY_SERVICES_NOT_AVAILABLE');
+      } else if (error.code === statusCodes.SIGN_IN_REQUIRED) {
+        console.log('LoginScreen ==> SIGN_IN_REQUIRED');
+        signIn();
       } else {
         // some other error happened
         Alert.alert(error);
