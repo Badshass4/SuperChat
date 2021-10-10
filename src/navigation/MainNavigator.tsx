@@ -3,7 +3,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 
 import LoginScreen from '../screens/Login/LoginScreen';
-import HomeScreen from '../screens/Home/HomeScreen';
+import HomeTabNavigator from './HomeTabNavigator';
 
 export type MainNavigatorParams = {
   Login: undefined;
@@ -21,7 +21,7 @@ const LoginStack = () => {
       />
       <Stack.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeTabNavigator}
         options={{
           headerShown: false,
         }}

@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {StyleSheet, Text, View, TouchableOpacity, Alert} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-// import Icon from 'react-native-vector-icons/FontAwesome';
 import {useDispatch} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {
@@ -25,7 +24,6 @@ interface LoginScreenProps {
 }
 
 const LoginScreen = () => {
-  // const googleIcon = <Icon name="google" size={30} />;
   const [text, setText] = useState('Login to SuperChat');
   const [loggedIn, setloggedIn] = useState(false);
   const dispatch = useDispatch();
@@ -97,10 +95,8 @@ export const LoginScreenProps = (props: LoginScreenProps) => {
   useEffectHook(() => {
     async function isUserSignedIn() {
       const isSignedIn = await GoogleSignin.isSignedIn();
-      if (isSignedIn) {
+      if (isSignedIn && userEmail === null) {
         silentSignIn();
-      } else {
-        console.log('No user Logged In');
       }
     }
     isUserSignedIn();

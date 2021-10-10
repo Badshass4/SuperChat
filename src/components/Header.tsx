@@ -6,24 +6,24 @@ import {
 } from '@react-native-google-signin/google-signin';
 import {useDispatch} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-import {useTypedSelector} from '../../state/reducers/RootReducer';
-import {logoutUser} from '../../state/actions/UserAction';
+import {useTypedSelector} from '../state/reducers/RootReducer';
+import {logoutUser} from '../state/actions/UserAction';
 
-interface HomeScreenProps {
+interface HeaderProps {
   user: any;
   dispatch: Function;
   navigation: any;
   useEffectHook: Function;
 }
 
-const HomeScreen = () => {
-  const user = useTypedSelector(state => state.UserReducer);
+const Header = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-
+  const user = useTypedSelector(state => state.UserReducer);
   return (
-    <HomeScreenProps
+    <HeaderProps
       user={user}
       dispatch={dispatch}
       navigation={navigation}
@@ -32,9 +32,9 @@ const HomeScreen = () => {
   );
 };
 
-export const HomeScreenProps = (props: HomeScreenProps) => {
+export const HeaderProps = (props: HeaderProps) => {
   const {user, dispatch, navigation, useEffectHook} = props;
-  const {userEmail} = user;
+  const {userEmail, userName} = user;
 
   useEffectHook(() => {
     if (userEmail === null || userEmail === undefined) {
@@ -47,7 +47,6 @@ export const HomeScreenProps = (props: HomeScreenProps) => {
     try {
       await GoogleSignin.revokeAccess();
       await GoogleSignin.signOut();
-      //   setloggedIn(false);
       dispatch(logoutUser());
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_REQUIRED) {
@@ -58,13 +57,27 @@ export const HomeScreenProps = (props: HomeScreenProps) => {
     }
   };
   return (
-    <View>
-      <Text>{user.userEmail}</Text>
-      <Button onPress={signOut} title="LogOut" color="red" />
+    <View style={styles.mainContainer}>
+      <Text style={styles.nameText}>{userName}</Text>
+      <Icon name="user-circle" size={25} onPress={signOut} />
     </View>
   );
 };
 
-export default HomeScreen;
+export default Header;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  mainContainer: {
+    height: 50,
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'powderblue',
+  },
+  nameText: {
+    fontSize: 18,
+    fontFamily: 'nunito',
+    fontWeight: '700',
+  },
+});
